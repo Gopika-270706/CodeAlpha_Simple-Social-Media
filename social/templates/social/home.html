@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Simple Social Media</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .create-post {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 12px 22px;
+            background: white;
+            color: #764ba2;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .create-post:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .posts-title {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 25px;
+        }
+
+        .post-card {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transition: 0.3s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .username {
+            color: #764ba2;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .post-content {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .comment-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .comment-form input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .comment-form input:focus {
+            border-color: #764ba2;
+        }
+
+        .comment-form button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 20px;
+            background: #764ba2;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .comments {
+            margin-top: 18px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .comment {
+            background: #f5f3ff;
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-top: 8px;
+            color: #333;
+        }
+
+        .comment strong {
+            color: #764ba2;
+        }
+
+        .no-comments,
+        .no-posts {
+            color: #777;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 25px;
+            }
+
+            .comment-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    
+
+<div class="container">
+
+    <div class="header">
+        <h1>✨ Simple Social Media</h1>
+        <p>Share your thoughts and connect with people</p>
+
+        <a href="{% url 'create_post' %}" class="create-post">
+            + Create a New Post
+        </a>
+    </div>
+
+    <h2 class="posts-title">📝 All Posts</h2>
+
+    {% for post in posts %}
+
+        <div class="post-card">
+
+            <h3 class="username">
+              <a href="{% url 'profile' post.user.id %}">
+                 👤 {{ post.user.username }}
+                 </a>
+</h3>
+            {% if post.user != request.user %}
+<form method="POST" action="{% url 'toggle_follow' post.user.id %}">
+    {% csrf_token %}
+
+    {% if post.user.id in following_users %}
+        <button type="submit">Unfollow</button>
+    {% else %}
+        <button type="submit">Follow</button>
+    {% endif %}
+
+</form>
+{% endif %}
+
+            <p class="post-content">
+                {{ post.content }}
+            </p>
+            <form method="POST" action="{% url 'toggle_like' post.id %}">
+                {% csrf_token %}
+
+                <button type="submit" class="like-btn">
+                    ❤️ Like ({{ post.likes.count }})
+                </button>
+            </form>
+            <form method="POST"
+                  action="{% url 'add_comment' post.id %}"
+                  class="comment-form">
+
+                {% csrf_token %}
+
+                <input
+                    type="text"
+                    name="content"
+                    placeholder="Write a comment..."
+                    required
+                >
+
+                <button type="submit">
+                    Comment
+                </button>
+
+            </form>
+
+
+            <div class="comments">
+
+                <h4>💬 Comments</h4>
+
+                {% for comment in post.comments.all %}
+
+                    <div class="comment">
+
+                        <strong>
+                            {{ comment.user.username }}
+                        </strong>
+
+                        <span>
+                            {{ comment.content }}
+                        </span>
+
+                    </div>
+
+                {% empty %}
+
+                    <p class="no-comments">
+                        No comments yet. Be the first! 😊
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    {% empty %}
+
+        <div class="post-card">
+            <p class="no-posts">
+                No posts yet. Create your first post! 🚀
+            </p>
+        </div>
+
+    {% endfor %}
+
+</div>
+<script>
+    const likeButtons = document.querySelectorAll(".like-btn");
+
+    likeButtons.forEach(function(button) {
+        button.addEventListener("click", function() {
+            button.style.transform = "scale(1.2)";
+
+            setTimeout(function() {
+                button.style.transform = "scale(1)";
+            }, 200);
+        });
+    });
+</script>
+
+</body>
+</html>
